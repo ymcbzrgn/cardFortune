@@ -9,6 +9,7 @@ public class CardFortune
 {
     private IMongoCollection<BsonDocument> _collection;
     public int nameCharacter;
+    public List<string> finalFortune = new List<string>();
 
     public CardFortune(IMongoCollection<BsonDocument> collection)
     {
@@ -25,11 +26,22 @@ public class CardFortune
             Console.WriteLine("Sayi gir lan essek");
         }
         var fortune = await fortuneAlgorithm(shuffledWords);
+
+
+        Console.WriteLine(string.Join(Environment.NewLine, fortune));
+        Console.WriteLine("AAAAAAAAA");
+        Console.WriteLine(fortune.Count);
+        Console.WriteLine("AAAAAAAAA");
+
         var fortuneUpDown = await UpDown(fortune);
 
-        Console.WriteLine(string.Join(Environment.NewLine, shuffledWords));
-        Console.WriteLine("AAAAAAAAA");
+        Console.WriteLine("AAAAAAAAAB");
+        Console.WriteLine(fortune.Count);
+        Console.WriteLine("AAAAAAAAAB");
+
         Console.WriteLine(string.Join(Environment.NewLine, fortune));
+        Console.WriteLine("IBNELERE INAT YASA");
+        Console.WriteLine(string.Join(Environment.NewLine, finalFortune));
         Console.WriteLine("IBNELERE INAT YASA");
 
     }
@@ -114,12 +126,25 @@ public class CardFortune
 
     private Task<List<string>> UpDown(List<string> fortune)
     {
-        List<string> result = new List<string>();
-
-        
-
-
+        for (int x = 0; x < 10; x++)
+        {
+            List<string> temp = new List<string>();
+            for (int i = 0, j = fortune.Count - 1; i <= j; i++, j--)
+            {
+                if (fortune[i] == fortune[j])
+                {
+                    finalFortune.Add(fortune[i]);
+                }
+                else
+                {
+                    temp.Add(fortune[i]);
+                    temp.Add(fortune[j]);
+                }
+            }
+            fortune.Clear();
+            fortune.AddRange(temp);
+        }
+        List<string> result = fortune;
         return Task.FromResult(result);
     }
-
 }
