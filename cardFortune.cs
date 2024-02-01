@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using MongoDB.Bson;
@@ -8,12 +9,15 @@ using System.Runtime.CompilerServices;
 public class CardFortune
 {
     private IMongoCollection<BsonDocument> _collection;
+    private IMongoCollection<BsonDocument> _finalCollection;
     public int nameCharacter;
     public List<string> finalFortune = new List<string>();
+    public List<string> fortuneMeaning = new List<string>();
 
-    public CardFortune(IMongoCollection<BsonDocument> collection)
+    public CardFortune(IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> finalCollection)
     {
         _collection = collection;
+        _finalCollection = finalCollection;
     }
 
     public async Task StartFortune()
@@ -25,24 +29,20 @@ public class CardFortune
         {
             Console.WriteLine("Sayi gir lan essek");
         }
+
         var fortune = await fortuneAlgorithm(shuffledWords);
+        fortune = await UpDown(fortune);
+        fortune = chooseCard(fortune);
 
-
-        Console.WriteLine(string.Join(Environment.NewLine, fortune));
         Console.WriteLine("AAAAAAAAA");
         Console.WriteLine(fortune.Count);
         Console.WriteLine("AAAAAAAAA");
-
-        var fortuneUpDown = await UpDown(fortune);
-
-        Console.WriteLine("AAAAAAAAAB");
-        Console.WriteLine(fortune.Count);
-        Console.WriteLine("AAAAAAAAAB");
-
         Console.WriteLine(string.Join(Environment.NewLine, fortune));
         Console.WriteLine("IBNELERE INAT YASA");
         Console.WriteLine(string.Join(Environment.NewLine, finalFortune));
         Console.WriteLine("IBNELERE INAT YASA");
+        var final = await FortuneTeller();
+        Console.WriteLine(string.Join(Environment.NewLine, final));
 
     }
     private async Task<List<string>> GetAllWords()
@@ -57,6 +57,47 @@ public class CardFortune
             return string.Empty;
         }).ToList();
     }
+
+    private async Task<List<List<string>>> GetAllFortunes()
+    {
+        var allFortunes = await _finalCollection.Find(new BsonDocument()).ToListAsync();
+
+        return allFortunes.Select(wordDocument =>
+        {
+            if (wordDocument.Contains("fortune") && wordDocument.Contains("meaning"))
+            {
+                string fortune = wordDocument["fortune"].AsString ?? string.Empty;
+                string meaning = wordDocument["meaning"].AsString ?? string.Empty;
+
+                return new List<string> { fortune, meaning };
+            }
+
+            return new List<string>();
+        }).ToList();
+    }
+
+    private async Task<List<string>> FortuneTeller()
+    {
+        List<List<string>> allFortunes = await GetAllFortunes();
+        List<string> fortuneMeanings = new List<string>();
+
+        foreach (var fortunePair in allFortunes)
+        {
+            if (fortunePair.Count == 2)
+            {
+                string fortune = fortunePair[0];
+                string meaning = fortunePair[1];
+
+                if (finalFortune.Contains(fortune))
+                {
+                    fortuneMeanings.Add($"{fortune} - {meaning}");
+                }
+            }
+        }
+        return fortuneMeanings;
+    }
+
+
 
     private async Task<List<string>> Shuffle()
     {
@@ -86,7 +127,7 @@ public class CardFortune
         return allWords!;
     }
 
-    private Task<List<string>> fortuneAlgorithm(List<string> shuffledWords)
+    private Task<List<string>> fortuneAlgorithm(List<string> shuffledWords) //degisiklik gerekebilir
     {
         List<List<string>> decks = new List<List<string>>();
         for (int i = 0; i < nameCharacter; i++)
@@ -126,7 +167,7 @@ public class CardFortune
 
     private Task<List<string>> UpDown(List<string> fortune)
     {
-        for (int x = 0; x < 10; x++)
+        for (int x = 0; x < 3; x++)
         {
             List<string> temp = new List<string>();
             for (int i = 0, j = fortune.Count - 1; i <= j; i++, j--)
@@ -147,4 +188,47 @@ public class CardFortune
         List<string> result = fortune;
         return Task.FromResult(result);
     }
+
+
+    private List<string> chooseCard(List<string> fortune)
+    {
+        List<string> originalFortune = new List<string>(fortune);
+
+        List<string> specialCards = new List<string> { "Yourself", "Him/Her", "Us" };
+
+        foreach (var specialCard in specialCards)
+        {
+            int temp = 0;
+            Console.WriteLine($"Now I want you to pick a card from the remaining deck ({originalFortune.Count}) onto {specialCard}");
+
+            while (!int.TryParse(Console.ReadLine(), out temp) || temp < 0 || temp >= originalFortune.Count)
+            {
+                Console.WriteLine("ekinler bas vermeden kor buzagi topallamazmis");
+            }
+
+            finalFortune.Add($"{specialCard}_{originalFortune[temp]}");
+            originalFortune.RemoveAt(temp);
+        }
+
+        for (int i = 0; i < finalFortune.Count - 3; i++)
+        {
+            int temp = 0;
+            Console.WriteLine("Now I want you to pick a card from the remaining deck (" + (originalFortune.Count) + ") onto the " + finalFortune[i]);
+
+            while (!int.TryParse(Console.ReadLine(), out temp) || temp < 0 || temp >= originalFortune.Count)
+            {
+                Console.WriteLine("ekinler bas vermeden kor buzagi topallamazmis");
+            }
+
+            finalFortune[i] = finalFortune[i] + "_" + originalFortune[temp];
+            originalFortune.RemoveAt(temp);
+        }
+
+        return originalFortune;
+    }
+
+
+    // Windows form
+
+    // WEB
 }
