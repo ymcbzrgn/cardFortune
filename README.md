@@ -4,12 +4,7 @@ This README details the functionality and usage of "Card Fortune," a love fortun
 
 ### Table of Contents
 
-* **Features:** #features
-* **How it Works:** #how-it-works
-* **Usage:** #usage
-* **Technical Details:** #technical-details
-* **Contributing:** #contributing
-* **License:** #license
+[TOCM]
 
 ### Features
 
