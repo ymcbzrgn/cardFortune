@@ -24,7 +24,7 @@ public class CardFortune
     {
         var shuffledWords = await Shuffle();
 
-        Console.WriteLine("How many character is your partners name?");
+        Console.WriteLine("Partnerinin ismi kac harfli?");
         while (!int.TryParse(Console.ReadLine(), out nameCharacter))
         {
             Console.WriteLine("Sayi gir lan essek");
@@ -33,17 +33,9 @@ public class CardFortune
         var fortune = await fortuneAlgorithm(shuffledWords);
         fortune = await UpDown(fortune);
         fortune = chooseCard(fortune);
-
-        Console.WriteLine("AAAAAAAAA");
-        Console.WriteLine(fortune.Count);
-        Console.WriteLine("AAAAAAAAA");
-        Console.WriteLine(string.Join(Environment.NewLine, fortune));
-        Console.WriteLine("IBNELERE INAT YASA");
-        Console.WriteLine(string.Join(Environment.NewLine, finalFortune));
-        Console.WriteLine("IBNELERE INAT YASA");
         var final = await FortuneTeller();
+        Console.WriteLine("Fal:");
         Console.WriteLine(string.Join(Environment.NewLine, final));
-
     }
     private async Task<List<string>> GetAllWords()
     {
@@ -61,20 +53,22 @@ public class CardFortune
     private async Task<List<List<string>>> GetAllFortunes()
     {
         var allFortunes = await _finalCollection.Find(new BsonDocument()).ToListAsync();
+        var result = new List<List<string>>();
 
-        return allFortunes.Select(wordDocument =>
+        foreach (var wordDocument in allFortunes)
         {
             if (wordDocument.Contains("fortune") && wordDocument.Contains("meaning"))
             {
                 string fortune = wordDocument["fortune"].AsString ?? string.Empty;
                 string meaning = wordDocument["meaning"].AsString ?? string.Empty;
 
-                return new List<string> { fortune, meaning };
+                result.Add(new List<string> { fortune, meaning });
             }
+        }
 
-            return new List<string>();
-        }).ToList();
+        return result;
     }
+
 
     private async Task<List<string>> FortuneTeller()
     {
@@ -88,7 +82,7 @@ public class CardFortune
                 string fortune = fortunePair[0];
                 string meaning = fortunePair[1];
 
-                if (finalFortune.Contains(fortune))
+                if (finalFortune.Any(card => card.StartsWith(fortune)))
                 {
                     fortuneMeanings.Add($"{fortune} - {meaning}");
                 }
@@ -99,12 +93,13 @@ public class CardFortune
 
 
 
+
     private async Task<List<string>> Shuffle()
     {
         List<string> allWords = await GetAllWords();
 
         int iterations = 5;
-        Console.WriteLine("How many times you want to shuffle the cards?");
+        Console.WriteLine("Desteyi kac defa karistirmak istersin?");
         while (!int.TryParse(Console.ReadLine(), out iterations) || iterations <= 0)
         {
             Console.WriteLine("Adam ol duzgun bisi yaz");
@@ -172,6 +167,10 @@ public class CardFortune
             List<string> temp = new List<string>();
             for (int i = 0, j = fortune.Count - 1; i <= j; i++, j--)
             {
+                /*if (fortune[i] == "K" && fortune[j] == "10")
+                {                                                   //bi ara bak
+                    finalFortune.Add("K_10");
+                }*/
                 if (fortune[i] == fortune[j])
                 {
                     finalFortune.Add(fortune[i]);
@@ -199,7 +198,7 @@ public class CardFortune
         foreach (var specialCard in specialCards)
         {
             int temp = 0;
-            Console.WriteLine($"Now I want you to pick a card from the remaining deck ({originalFortune.Count}) onto {specialCard}");
+            Console.WriteLine($"Şimdi senden kalan desteden 0 ile {originalFortune.Count} arası {specialCard} kartının üstüne bir kart seçmeni istiyorum");
 
             while (!int.TryParse(Console.ReadLine(), out temp) || temp < 0 || temp >= originalFortune.Count)
             {
@@ -213,7 +212,7 @@ public class CardFortune
         for (int i = 0; i < finalFortune.Count - 3; i++)
         {
             int temp = 0;
-            Console.WriteLine("Now I want you to pick a card from the remaining deck (" + (originalFortune.Count) + ") onto the " + finalFortune[i]);
+            Console.WriteLine($"Şimdi senden kalan desteden 0 ile " + (originalFortune.Count) + " arası " + finalFortune[i]+" kartının üstüne bir kart seçmeni istiyorum");
 
             while (!int.TryParse(Console.ReadLine(), out temp) || temp < 0 || temp >= originalFortune.Count)
             {
